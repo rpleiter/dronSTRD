@@ -64,6 +64,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include <math.h>
+#include <stdint.h>
 
 /* USER CODE END Includes */
 
@@ -76,22 +77,26 @@
 /* USER CODE BEGIN Variables */
 
 /*Prioridades de las Tareas Periodicas*/
-#define PR_TAREA1 1
-#define PR_TAREA2 2
+#define PR_TAREA1_ALTITUD 1
+#define PR_TAREA2_HORIZONTALIDAD 2
+#define PR_TAREA3_MOTORES 3
+#define PR_TAREA4_VIBRACIONES 4
 
 /*Periodos de las tareas*/
-#define T_TAREA1 300
-#define T_TAREA2 200
+#define T_TAREA1_ALTITUD 300
+#define T_TAREA2_HORIZONTALIDAD 200
+#define T_TAREA3_MOTORES 150
+#define T_TAREA4_VIBRACIONES 350
+
 
 #define MAX_ROTATION 10
-#define MIN_ROTATION -10
 
  /* USER CODE BEGIN RTOS_MUTEX */
  
    /*********************Semaforo 1*********************/ ;
    SemaphoreHandle_t Semaforo_1 = NULL;
 	 
-	 /* Declarar aquí las variables protegidas por el semáforo 1 */
+	 /* Declarar aquï¿½ las variables protegidas por el semï¿½foro 1 */
    double Altitud = 0; // Altitud  
    double RX = 0; // Inclinacion eje X 
    double RY = 0; // Inclinacion eje Y
@@ -102,8 +107,8 @@
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-   void StartTarea1(void const * argument);
-	 void StartTarea2(void const * argument);
+   void TareaLeerAltitud(void const * argument);
+	 void TareaLeerHorizontabilidad(void const * argument);
 	
 /* Variables para depuracion */
    int ContTarea1 = 0;
@@ -152,11 +157,8 @@ int main(void)
   Tarea1Handle = osThreadCreate(osThread(Tarea1), NULL); */
 
   /* USER CODE BEGIN RTOS_THREADS using FreeRTOS */
-  xTaskCreate(StartTarea1, "Encender motores", configMINIMAL_STACK_SIZE, NULL, PR_TAREA1, NULL)
-;
-/* USER CODE BEGIN RTOS_THREADS using FreeRTOS */
-  xTaskCreate(StartTarea2, "Comprobar inclinacion", configMINIMAL_STACK_SIZE, NULL, PR_TAREA2, NULL);
-
+  xTaskCreate(TareaLeerAltitud, "Encender motores", configMINIMAL_STACK_SIZE, NULL, PR_TAREA1_ALTITUD, NULL);
+  xTaskCreate(TareaLeerHorizontabilidad, "Comprobar horizontabilidad", configMINIMAL_STACK_SIZE, NULL, PR_TAREA2_HORIZONTALIDAD, NULL);
 
   /* Start scheduler */
   osKernelStart();
@@ -170,7 +172,7 @@ int main(void)
 
 /* USER CODE StartTarea1 */
 
-void StartTarea1(void const * argument)
+void TareaLeerAltitud(void const * argument)
 {
   /* USER CODE BEGIN StartTarea1 */
 
@@ -200,20 +202,21 @@ void StartTarea1(void const * argument)
 		
 		
     // osDelay(1);
-		vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(T_TAREA1));
+		vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(T_TAREA1_ALTITUD));
   }
   /* USER CODE END 5 */
 	
   /* USER CODE END StartTarea1 */
 }
-void StartTarea2(void const * argument)
+
+void TareaLeerHorizontabilidad(void const * argument)
 {
   /* USER CODE BEGIN StartTarea1 */
-	double rotationX=0;
-	double rotationY=0;
+	double rotationX = 0;
+	double rotationY = 0;
 
-	 TickType_t lastWakeTime;
-   lastWakeTime = xTaskGetTickCount();
+	TickType_t lastWakeTime;
+  lastWakeTime = xTaskGetTickCount();
 	
 
   /* Infinite loop */
@@ -222,10 +225,10 @@ void StartTarea2(void const * argument)
 		rotationX = Calculate_RotationX();
 		rotationY = Calculate_RotationY();
 		
-		if (MAX_ROTATION<=rotationX){
+		if (rotationX > MAX_ROTATION){
 			Enciende_motor_1 = 1;
 		}
-		else if (MIN_ROTATION >= rotationX){
+		else if (rotationX < -MAX_ROTATION){
 			Enciende_motor_2 = 1;
 		}
 		else{
@@ -233,18 +236,18 @@ void StartTarea2(void const * argument)
 			Enciende_motor_2 = 0;
 		}
 		
-		if (MAX_ROTATION<=rotationY){
+		if (rotationY > MAX_ROTATION) {
 			Enciende_motor_3 = 1;
 		}
-		else if(MIN_ROTATION >= rotationY){
+		else if (rotationY < -MAX_ROTATION) {
 			Enciende_motor_4 = 1;
 		}
-		else{
+		else {
 			Enciende_motor_3 = 0;
 			Enciende_motor_4 = 0;
 		}
     // osDelay(1);
-		vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(T_TAREA1));
+		vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(T_TAREA2_HORIZONTALIDAD));
   }
   /* USER CODE END 5 */
 	
