@@ -1,0 +1,77 @@
+<html>
+<body>
+<pre>
+<h1>µVision Build Log</h1>
+<h2>Tool Versions:</h2>
+IDE-Version: µVision V5.25.2.0
+Copyright (C) 2018 ARM Ltd and ARM Germany GmbH. All rights reserved.
+License Information: etsisi etsisi, upm, LIC=----
+ 
+Tool Versions:
+Toolchain:       MDK-Lite  Version: 5.25.2.0
+Toolchain Path:  C:\Keil_v5\ARM\ARMCC\Bin
+C Compiler:      Armcc.exe V5.06 update 6 (build 750)
+Assembler:       Armasm.exe V5.06 update 6 (build 750)
+Linker/Locator:  ArmLink.exe V5.06 update 6 (build 750)
+Library Manager: ArmAr.exe V5.06 update 6 (build 750)
+Hex Converter:   FromElf.exe V5.06 update 6 (build 750)
+CPU DLL:         SARMCM3.DLL V5.25.2.0
+Dialog DLL:      DCM.DLL V1.17.1.0
+Target DLL:      STLink\ST-LINKIII-KEIL_SWO.dll V3.0.1.0
+Dialog DLL:      TCM.DLL V1.35.1.0
+ 
+<h2>Project:</h2>
+C:\Users\bv0417\Downloads\PrSTRDv1\MDK-ARM\P3CAN.uvprojx
+Project File Date:  02/22/2025
+
+<h2>Output:</h2>
+*** Using Compiler 'V5.06 update 6 (build 750)', folder: 'C:\Keil_v5\ARM\ARMCC\Bin'
+Build target 'P3CAN'
+compiling main.c...
+../Inc/spi.h(73): warning:  #1295-D: Deprecated declaration Inicializa_Acelerometro - give arg types
+   void Inicializa_Acelerometro ();	
+../Inc/acelerometro.h(6): warning:  #1295-D: Deprecated declaration Calculate_RotationX - give arg types
+  double Calculate_RotationX ();
+../Inc/acelerometro.h(7): warning:  #1-D: last line of file ends without a newline
+  double Calculate_RotationY ();
+../Inc/acelerometro.h(7): warning:  #1295-D: Deprecated declaration Calculate_RotationY - give arg types
+  double Calculate_RotationY ();
+../Src/main.c(151): warning:  #167-D: argument of type "void (*)(const void *)" is incompatible with parameter of type "TaskFunction_t"
+    xTaskCreate(StartTarea1, "Encender motores", configMINIMAL_STACK_SIZE, NULL, PR_TAREA1, NULL)
+../Src/main.c(154): warning:  #167-D: argument of type "void (*)(const void *)" is incompatible with parameter of type "TaskFunction_t"
+    xTaskCreate(StartTarea2, "Comprobar inclinacion", configMINIMAL_STACK_SIZE, NULL, PR_TAREA2, NULL);
+../Src/main.c(203): warning:  #550-D: variable "rotationX"  was set but never used
+  	double rotationX=0;
+../Src/main.c(204): warning:  #550-D: variable "rotationY"  was set but never used
+  	double rotationY=0;
+../Src/main.c: 8 warnings, 0 errors
+linking...
+Program Size: Code=17080 RO-data=608 RW-data=132 ZI-data=17116  
+FromELF: creating hex file...
+"P3CAN\P3CAN.axf" - 0 Error(s), 8 Warning(s).
+
+<h2>Software Packages used:</h2>
+
+Package Vendor: ARM
+                http://www.keil.com/pack/ARM.CMSIS.5.9.0.pack
+                ARM.CMSIS.5.9.0
+                CMSIS (Common Microcontroller Software Interface Standard)
+   * Component: CORE Version: 5.6.0
+
+Package Vendor: Keil
+                https://www.keil.com/pack/Keil.STM32F4xx_DFP.2.17.1.pack
+                Keil.STM32F4xx_DFP.2.17.1
+                STMicroelectronics STM32F4 Series Device Support, Drivers and Examples
+
+<h2>Collection of Component include folders:</h2>
+  .\RTE\_P3CAN
+  C:\Keil_v5\ARM\PACK\ARM\CMSIS\5.9.0\CMSIS\Core\Include
+  C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\2.17.1\Drivers\CMSIS\Device\ST\STM32F4xx\Include
+
+<h2>Collection of Component Files used:</h2>
+
+   * Component: ARM::CMSIS:CORE:5.6.0
+Build Time Elapsed:  00:00:02
+</pre>
+</body>
+</html>
