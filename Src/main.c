@@ -90,6 +90,9 @@
 
 
 #define MAX_ROTATION 10
+#define MIN_ROTATION -10
+#define T_TAREA_ALTITUD 300
+#define ALTITUD_DESTINO 400
 
  /* USER CODE BEGIN RTOS_MUTEX */
  
@@ -100,27 +103,45 @@
    double Altitud = 0; // Altitud  
    double RX = 0; // Inclinacion eje X 
    double RY = 0; // Inclinacion eje Y
-
+	 int Lectura_ADC1 = 0; //Valor leido
+	 double aX, aY, aZ = 0;
    /* Tarea y mutex creados con CMSIS 
    osThreadId Tarea1Handle;
    osMutexId mutex1Handle; */
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-   void TareaLeerAltitud(void const * argument);
+   void EncenderMotores(void const * argument);
 	 void TareaLeerHorizontabilidad(void const * argument);
+	 void TareaAltitud(void const * argument);
+	 void TareaVibraciones(void const * argument);
 	
 /* Variables para depuracion */
    int ContTarea1 = 0;
-	 int Enciende_motor_1 = 0;
-	 int Enciende_motor_2 = 0;
-	 int Enciende_motor_3 = 0;
-	 int Enciende_motor_4 = 0;
+	 int ContTarea2 = 0;
+	 int enciende_motor_1 = 0;
+	 int enciende_motor_2 = 0;
+	 int enciende_motor_3 = 0;
+	 int enciende_motor_4 = 0;
+/*Señales*/
+	 int signal_altitud_perdida = 0; 
+	 int signal_inclinación_x_plus = 0;
+	 int signal_inclinación_x_minus = 0;
+	 int signal_inclinación_y_plus = 0;
+	 int signal_inclinación_y_minus = 0;
+	 int signal_start = 0;
+	 int signal_wait = 0;
+	 int risk = 0;
+	 int recover = 0;
+	 
+/* USER CODE BEGIN StartTarea1 */
+
 	 
 /* USER CODE END FunctionPrototypes */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+
 
 
 /**
@@ -157,8 +178,9 @@ int main(void)
   Tarea1Handle = osThreadCreate(osThread(Tarea1), NULL); */
 
   /* USER CODE BEGIN RTOS_THREADS using FreeRTOS */
-  xTaskCreate(TareaLeerAltitud, "Encender motores", configMINIMAL_STACK_SIZE, NULL, PR_TAREA1_ALTITUD, NULL);
+	xTaskCreate(TareaAltitud, "Comprobar horizontabilidad", configMINIMAL_STACK_SIZE, NULL, PR_TAREA1_ALTITUD, NULL);
   xTaskCreate(TareaLeerHorizontabilidad, "Comprobar horizontabilidad", configMINIMAL_STACK_SIZE, NULL, PR_TAREA2_HORIZONTALIDAD, NULL);
+  xTaskCreate(EncenderMotores, "Encender motores", configMINIMAL_STACK_SIZE, NULL, PR_TAREA3_MOTORES, NULL);
 
   /* Start scheduler */
   osKernelStart();
@@ -172,35 +194,90 @@ int main(void)
 
 /* USER CODE StartTarea1 */
 
-void TareaLeerAltitud(void const * argument)
+void EncenderMotores(void const * argument)
 {
   /* USER CODE BEGIN StartTarea1 */
 
 	 TickType_t lastWakeTime;
    lastWakeTime = xTaskGetTickCount();
  	
-	 HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
+	 /*HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
 	 HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET);
 	 HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
-	 HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET);	
+	 HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET);	*/
 
   /* Infinite loop */
   for(;;)
   {
+		
+		if(signal_altitud_perdida == 0){
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
+		}			
+		if(signal_inclinación_x_plus == 1){
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
+		} else{
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET);
+		}
+		if(signal_inclinación_x_minus == 1)
+		{
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET);
+		}else{
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_RESET);
+		}
+		if(signal_inclinación_y_plus  == 1)
+		{
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
+		}else{
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
+		}
+		if(signal_inclinación_y_minus  == 1)
+		{
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
+		}else{
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
+		}
+		
+		if(signal_altitud_perdida == 1){
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
+		}
+
+		
+	
+		
 		/*
-		if(Enciende_motor_1 == 1)
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-	  }
+		if(enciende_motor_1 == 1)
+		{
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
+	  }else{
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET);
+		}
+		if(enciende_motor_2 == 1)
+		{
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET);
+	  }else{
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_RESET);
+		}
+		if(enciende_motor_3 == 1)
+		{
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
+	  }else{
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
+		}
+		if(enciende_motor_4 == 1)
+		{
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
+	  }else{
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
+		}
 		*/
-		/*ContTarea1 ++;
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12); 		
-	  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13); 
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14); 		
-	  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15); */
 		
-		
-		
-		
+		ContTarea1 ++;
     // osDelay(1);
 		vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(T_TAREA1_ALTITUD));
   }
@@ -211,13 +288,11 @@ void TareaLeerAltitud(void const * argument)
 
 void TareaLeerHorizontabilidad(void const * argument)
 {
-  /* USER CODE BEGIN StartTarea1 */
 	double rotationX = 0;
 	double rotationY = 0;
-
+	
 	TickType_t lastWakeTime;
   lastWakeTime = xTaskGetTickCount();
-	
 
   /* Infinite loop */
   for(;;)
@@ -226,26 +301,31 @@ void TareaLeerHorizontabilidad(void const * argument)
 		rotationY = Calculate_RotationY();
 		
 		if (rotationX > MAX_ROTATION){
-			Enciende_motor_1 = 1;
+			signal_inclinación_x_plus = 1;
+			signal_inclinación_x_minus = 0;
 		}
-		else if (rotationX < -MAX_ROTATION){
-			Enciende_motor_2 = 1;
+		else if (rotationX < MIN_ROTATION){
+			signal_inclinación_x_minus = 1;
+			signal_inclinación_x_plus = 0;
 		}
 		else{
-			Enciende_motor_1 = 0;
-			Enciende_motor_2 = 0;
+			signal_inclinación_x_minus = 0;
+			signal_inclinación_x_plus = 0;
 		}
 		
 		if (rotationY > MAX_ROTATION) {
-			Enciende_motor_3 = 1;
+			signal_inclinación_y_minus = 0;
+			signal_inclinación_y_plus = 1;
 		}
-		else if (rotationY < -MAX_ROTATION) {
-			Enciende_motor_4 = 1;
+		else if (rotationY < MIN_ROTATION) {
+			signal_inclinación_y_minus = 1;
+			signal_inclinación_y_plus = 0;
 		}
 		else {
-			Enciende_motor_3 = 0;
-			Enciende_motor_4 = 0;
+			signal_inclinación_y_minus = 0;
+			signal_inclinación_y_plus = 0;
 		}
+		ContTarea2 ++;
     // osDelay(1);
 		vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(T_TAREA2_HORIZONTALIDAD));
   }
@@ -254,6 +334,49 @@ void TareaLeerHorizontabilidad(void const * argument)
   /* USER CODE END StartTarea1 */
 }
 
+void TareaAltitud(void const * argument)
+{ 
+	TickType_t xLastWakeTime;
+	
+	/* Inicializa canal 1 del ADC1 */
+	ADC_ChannelConfTypeDef sConfigN = {0}; // Variable local en la tarea
+	sConfigN.Channel = ADC_CHANNEL_1; // selecciona el canal 1
+	sConfigN.Rank = 1;
+	sConfigN.SamplingTime = ADC_SAMPLETIME_28CYCLES;
+	HAL_ADC_ConfigChannel(&hadc1, &sConfigN); // configura ADC1-Canal_1
+	for(;;)
+	{// Activación de la lectura
+		xLastWakeTime = xTaskGetTickCount();
+		HAL_ADC_Start(&hadc1); // comienza la conversón AD
+		if(HAL_ADC_PollForConversion(&hadc1, 5) == HAL_OK){
+			Lectura_ADC1 = HAL_ADC_GetValue(&hadc1); // leemos el valor
+			Altitud = Lectura_ADC1; // actualizamos una variable global 
+			if (Altitud < ALTITUD_DESTINO - 2 ){
+				signal_altitud_perdida = 1;
+				
+			} 
+			else{
+				signal_altitud_perdida = 0;
+			}
+		}
+		vTaskDelayUntil( &xLastWakeTime, pdMS_TO_TICKS( T_TAREA_ALTITUD ));
+	}
+} // fin de TareaN
+
+void TareaVibraciones(void const * argument)
+{ 
+	int UltimaAltitud = 2147483647;
+	int diff = 0;
+	TickType_t xLastWakeTime;
+	
+	double lastX, lastY, lastZ, currentX, currentY, currentZ;
+	int counter = 0;
+  RefreshAcc(&lastX , &lastY, &lastZ);
+	for(;;)
+	{
+		RefreshAcc(&currentX, &currentY, &currentZ);
+	}
+}
 
 /**
   * @brief System Clock Configuration
